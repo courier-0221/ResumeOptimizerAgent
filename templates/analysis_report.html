@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 14mm 14mm 14mm 14mm;
+            @bottom-center {
+                content: "岗位匹配分析报告 — 第 " counter(page) " 页 / 共 " counter(pages) " 页";
+                font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+                font-size: 8.5pt;
+                color: #999;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", "Hiragino Sans GB", "WenQuanYi Micro Hei", sans-serif;
+            font-size: 10pt;
+            line-height: 1.6;
+            color: #2b2b2b;
+        }
+
+        /* ===== 报告头部 ===== */
+        .report-header {
+            text-align: center;
+            padding-bottom: 8px;
+            margin-bottom: 14px;
+            border-bottom: 2px solid #2c5aa0;
+        }
+
+        .report-header h1 {
+            font-size: 18pt;
+            font-weight: 700;
+            color: #2c5aa0;
+            letter-spacing: 2px;
+            margin-bottom: 4px;
+        }
+
+        .report-meta {
+            font-size: 9.5pt;
+            color: #666;
+        }
+
+        .report-meta span {
+            margin: 0 6px;
+        }
+
+        .report-meta strong {
+            color: #2c5aa0;
+        }
+
+        /* ===== 区块标题 ===== */
+        h2.section-title {
+            font-size: 12pt;
+            font-weight: 700;
+            color: #ffffff;
+            background: #2c5aa0;
+            padding: 4px 10px;
+            margin-top: 14px;
+            margin-bottom: 10px;
+            border-radius: 2px;
+            letter-spacing: 1px;
+        }
+
+        h2.section-title:first-of-type {
+            margin-top: 0;
+        }
+
+        /* ===== 评分卡 ===== */
+        .score-card {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+            border: 1px solid #d9e3f2;
+            border-radius: 4px;
+            background: #f5f8fc;
+            padding: 10px 14px;
+            margin-bottom: 4px;
+        }
+
+        .score-left {
+            display: table-cell;
+            width: 110px;
+            vertical-align: middle;
+            text-align: center;
+            border-right: 1px solid #d9e3f2;
+            padding-right: 10px;
+        }
+
+        .score-number {
+            font-size: 30pt;
+            font-weight: 700;
+            color: #2c5aa0;
+            line-height: 1.05;
+        }
+
+        .score-unit {
+            font-size: 10pt;
+            color: #888;
+            margin-left: 2px;
+        }
+
+        .score-level {
+            display: inline-block;
+            margin-top: 2px;
+            font-size: 9.5pt;
+            font-weight: 700;
+            color: #fff;
+            background: #2c5aa0;
+            padding: 1px 8px;
+            border-radius: 10px;
+        }
+
+        .score-level.lv-excellent { background: #1f9d55; }
+        .score-level.lv-good      { background: #2c5aa0; }
+        .score-level.lv-fair      { background: #d97706; }
+        .score-level.lv-weak      { background: #b91c1c; }
+
+        .score-right {
+            display: table-cell;
+            vertical-align: middle;
+            padding-left: 14px;
+        }
+
+        .score-summary {
+            font-size: 11pt;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+
+        .score-bar-wrap {
+            margin-top: 6px;
+            background: #e6ecf5;
+            border-radius: 6px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2c5aa0 0%, #4f86d6 100%);
+            border-radius: 6px;
+        }
+
+        /* ===== 通用卡片条目 ===== */
+        .item-card {
+            border-left: 3px solid #2c5aa0;
+            background: #f9fbfd;
+            padding: 6px 10px;
+            margin-bottom: 6px;
+            page-break-inside: avoid;
+        }
+
+        .item-card .item-title {
+            font-weight: 700;
+            color: #1a1a1a;
+            font-size: 10.5pt;
+            margin-bottom: 2px;
+        }
+
+        .item-card .item-detail {
+            color: #444;
+            font-size: 10pt;
+            line-height: 1.6;
+        }
+
+        /* ===== gaps 专用 ===== */
+        .gap-card {
+            border-left-color: #b91c1c;
+            background: #fdf6f6;
+            margin-bottom: 7px;
+        }
+
+        .gap-card .item-title {
+            display: table;
+            width: 100%;
+        }
+
+        .gap-card .gap-skill {
+            display: table-cell;
+            color: #1a1a1a;
+        }
+
+        .gap-card .gap-importance {
+            display: table-cell;
+            text-align: right;
+            white-space: nowrap;
+            font-size: 9pt;
+            font-weight: 700;
+            color: #fff;
+            width: 60px;
+        }
+
+        .gap-card .gap-importance span {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 10px;
+        }
+
+        .imp-high { background: #b91c1c; }
+        .imp-mid  { background: #d97706; }
+        .imp-low  { background: #6b7280; }
+
+        .gap-card .gap-row {
+            margin-top: 3px;
+            font-size: 9.8pt;
+            color: #444;
+            line-height: 1.55;
+        }
+
+        .gap-card .gap-row strong {
+            color: #b91c1c;
+            margin-right: 4px;
+        }
+
+        /* ===== strengths ===== */
+        .strength-card {
+            border-left-color: #1f9d55;
+            background: #f4faf6;
+        }
+
+        .strength-card .item-title {
+            color: #1f9d55;
+        }
+
+        /* ===== transferable ===== */
+        .trans-card {
+            border-left-color: #d97706;
+            background: #fdf8f0;
+        }
+
+        .trans-card .trans-row {
+            font-size: 10pt;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .trans-card .trans-row strong {
+            color: #d97706;
+            margin-right: 4px;
+        }
+
+        .trans-card .trans-arrow {
+            color: #d97706;
+            margin: 0 6px;
+            font-weight: 700;
+        }
+
+        /* ===== 关键词 ===== */
+        .kw-block {
+            margin-bottom: 6px;
+        }
+
+        .kw-block .kw-label {
+            font-size: 10pt;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .kw-block .kw-label.covered { color: #1f9d55; }
+        .kw-block .kw-label.to-add  { color: #b91c1c; }
+
+        .kw-tag {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 3px;
+            font-size: 9pt;
+            margin: 1px 4px 3px 0;
+        }
+
+        .kw-tag.covered {
+            background: #e6f4ec;
+            color: #1f9d55;
+            border: 1px solid #c5e4d2;
+        }
+
+        .kw-tag.to-add {
+            background: #fdecec;
+            color: #b91c1c;
+            border: 1px solid #f3c8c8;
+        }
+
+        /* ===== 列表 ===== */
+        ul.bullets {
+            list-style: none;
+            padding-left: 4px;
+            margin-top: 2px;
+        }
+
+        ul.bullets li {
+            position: relative;
+            padding-left: 16px;
+            margin-bottom: 4px;
+            color: #333;
+            line-height: 1.6;
+            text-align: justify;
+        }
+
+        ul.bullets li::before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: #2c5aa0;
+            font-weight: 700;
+        }
+
+        ul.bullets.interview li::before {
+            color: #d97706;
+        }
+
+        ul.bullets.action li::before {
+            content: "▶";
+            color: #1f9d55;
+        }
+
+        /* ===== 整体策略框 ===== */
+        .strategy-box {
+            background: #f5f8fc;
+            padding: 10px 14px;
+            border-left: 3px solid #2c5aa0;
+            color: #333;
+            line-height: 1.7;
+            text-align: justify;
+        }
+
+        .empty-hint {
+            color: #999;
+            font-style: italic;
+            font-size: 9.5pt;
+            padding: 4px 0;
+        }
+
+        .disclaimer {
+            margin-top: 16px;
+            padding-top: 8px;
+            border-top: 1px dashed #d0d0d0;
+            font-size: 8.5pt;
+            color: #999;
+            line-height: 1.6;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+{% set gr = report.gap_report or {} %}
+{% set score = gr.match_score if gr.match_score is not none else 0 %}
+{% set level = gr.match_level or '' %}
+{%- if score >= 85 -%}
+    {%- set level_class = 'lv-excellent' -%}
+{%- elif score >= 70 -%}
+    {%- set level_class = 'lv-good' -%}
+{%- elif score >= 55 -%}
+    {%- set level_class = 'lv-fair' -%}
+{%- else -%}
+    {%- set level_class = 'lv-weak' -%}
+{%- endif -%}
+
+{# ====================== 报告头部 ====================== #}
+<div class="report-header">
+    <h1>岗位匹配分析报告</h1>
+    <div class="report-meta">
+        {% if report.candidate_name %}<span><strong>候选人：</strong>{{ report.candidate_name }}</span><span>·</span>{% endif %}
+        <span><strong>目标岗位：</strong>{{ report.job_title or '未指定' }}</span>
+        {% if report.generated_at %}<span>·</span><span><strong>生成时间：</strong>{{ report.generated_at }}</span>{% endif %}
+    </div>
+</div>
+
+{# ====================== 评分卡 ====================== #}
+<h2 class="section-title">综合匹配度</h2>
+<div class="score-card">
+    <div class="score-left">
+        <div>
+            <span class="score-number">{{ score }}</span><span class="score-unit">/100</span>
+        </div>
+        {% if level %}<div class="score-level {{ level_class }}">{{ level }}</div>{% endif %}
+    </div>
+    <div class="score-right">
+        <div class="score-summary">{{ gr.one_line_summary or '—' }}</div>
+        <div class="score-bar-wrap">
+            <div class="score-bar-fill" style="width: {{ score }}%;"></div>
+        </div>
+    </div>
+</div>
+
+{# ====================== 核心优势 ====================== #}
+<h2 class="section-title">核心优势</h2>
+{% if gr.strengths %}
+    {% for s in gr.strengths %}
+    <div class="item-card strength-card">
+        <div class="item-title">✓ {{ s.title or '' }}</div>
+        <div class="item-detail">{{ s.detail or '' }}</div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="empty-hint">本次未识别出与目标岗位强相关的优势项，建议结合下方"待补齐项"重点提升。</div>
+{% endif %}
+
+{# ====================== 关键差距 ====================== #}
+<h2 class="section-title">关键差距与补齐建议</h2>
+{% if gr.gaps %}
+    {% for g in gr.gaps %}
+    {%- set imp = (g.importance or '') -%}
+    {%- if '高' in imp -%}{%- set imp_class = 'imp-high' -%}
+    {%- elif '中' in imp -%}{%- set imp_class = 'imp-mid' -%}
+    {%- else -%}{%- set imp_class = 'imp-low' -%}{%- endif -%}
+    <div class="item-card gap-card">
+        <div class="item-title">
+            <div class="gap-skill">! {{ g.skill or '' }}</div>
+            <div class="gap-importance"><span class="{{ imp_class }}">{{ imp or '中' }}</span></div>
+        </div>
+        {% if g.why_matters %}<div class="gap-row"><strong>为什么重要：</strong>{{ g.why_matters }}</div>{% endif %}
+        {% if g.suggestion %}<div class="gap-row"><strong>补齐建议：</strong>{{ g.suggestion }}</div>{% endif %}
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="empty-hint">未识别出明显的能力差距，恭喜！可重点准备面试中的深度技术问题。</div>
+{% endif %}
+
+{# ====================== 可包装亮点 ====================== #}
+{% if gr.transferable_highlights %}
+<h2 class="section-title">可重新包装的亮点</h2>
+{% for t in gr.transferable_highlights %}
+<div class="item-card trans-card">
+    <div class="trans-row">
+        <strong>已有：</strong>{{ t.from or '' }}
+    </div>
+    <div class="trans-row" style="margin-top:3px;">
+        <span class="trans-arrow">→</span><strong>可包装为：</strong>{{ t.to or '' }}
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
+{# ====================== 关键词覆盖 ====================== #}
+{% set kc = gr.keyword_coverage or {} %}
+{% if kc.covered or kc.to_add %}
+<h2 class="section-title">岗位关键词覆盖</h2>
+{% if kc.covered %}
+<div class="kw-block">
+    <div class="kw-label covered">✓ 已覆盖（{{ kc.covered | length }}）</div>
+    {% for k in kc.covered %}<span class="kw-tag covered">{{ k }}</span>{% endfor %}
+</div>
+{% endif %}
+{% if kc.to_add %}
+<div class="kw-block">
+    <div class="kw-label to-add">+ 建议补充（{{ kc.to_add | length }}）</div>
+    {% for k in kc.to_add %}<span class="kw-tag to-add">{{ k }}</span>{% endfor %}
+</div>
+{% endif %}
+{% endif %}
+
+{# ====================== 立即可执行的行动项 ====================== #}
+{% if gr.action_items %}
+<h2 class="section-title">立即可执行的行动项</h2>
+<ul class="bullets action">
+    {% for a in gr.action_items %}<li>{{ a }}</li>{% endfor %}
+</ul>
+{% endif %}
+
+{# ====================== 面试准备方向 ====================== #}
+{% if gr.interview_focus %}
+<h2 class="section-title">面试准备方向</h2>
+<ul class="bullets interview">
+    {% for f in gr.interview_focus %}<li>{{ f }}</li>{% endfor %}
+</ul>
+{% endif %}
+
+{# ====================== 整体策略 ====================== #}
+{% if report.overall_strategy %}
+<h2 class="section-title">整体策略</h2>
+<div class="strategy-box">{{ report.overall_strategy }}</div>
+{% endif %}
+
+<div class="disclaimer">
+    本报告由 AI 基于候选人简历与目标岗位描述自动生成，仅供求职策略参考；最终请结合实际情况判断。
+</div>
+
+</body>
+</html>

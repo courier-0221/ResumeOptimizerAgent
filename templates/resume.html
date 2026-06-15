@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 10mm 12mm 10mm 12mm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", "Hiragino Sans GB", "WenQuanYi Micro Hei", sans-serif;
+            font-size: 10pt;
+            line-height: 1.45;
+            color: #2b2b2b;
+        }
+
+        /* ===== 个人信息 section 内的两列网格 ===== */
+        .info-grid {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+        }
+
+        .info-row {
+            display: table-row;
+        }
+
+        .info-cell {
+            display: table-cell;
+            padding: 3px 8px 3px 0;
+            vertical-align: top;
+            font-size: 10pt;
+            color: #333;
+            width: 50%;
+        }
+
+        .info-cell .info-label {
+            display: inline-block;
+            min-width: 70px;
+            color: #2c5aa0;
+            font-weight: 700;
+        }
+
+        /* ===== 区块标题 ===== */
+        h2.section-title {
+            font-size: 11.5pt;
+            font-weight: 700;
+            color: #ffffff;
+            background: #2c5aa0;
+            padding: 3px 10px;
+            margin-top: 10px;
+            margin-bottom: 7px;
+            border-radius: 2px;
+            letter-spacing: 1px;
+        }
+
+        h2.section-title:first-of-type {
+            margin-top: 0;
+        }
+
+        /* ===== 条目通用 ===== */
+        .entry {
+            margin-bottom: 7px;
+            page-break-inside: avoid;
+        }
+
+        .entry-header {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+            margin-bottom: 2px;
+        }
+
+        .entry-header .eh-left {
+            display: table-cell;
+            text-align: left;
+            vertical-align: baseline;
+        }
+
+        .entry-header .eh-right {
+            display: table-cell;
+            text-align: right;
+            vertical-align: baseline;
+            white-space: nowrap;
+            width: 25%;
+        }
+
+        .entry-title {
+            font-weight: 700;
+            font-size: 10.5pt;
+            color: #1a1a1a;
+        }
+
+        .entry-sub {
+            color: #555;
+            font-weight: 500;
+            margin-left: 6px;
+        }
+
+        .entry-period {
+            color: #777;
+            font-size: 9pt;
+            font-style: italic;
+            white-space: nowrap;
+        }
+
+        .entry-meta {
+            color: #666;
+            font-size: 9.5pt;
+            margin-bottom: 2px;
+        }
+
+        .contrib-label {
+            font-size: 9.5pt;
+            color: #666;
+            margin-top: 3px;
+            margin-bottom: 0;
+        }
+
+        /* ===== bullet 列表 ===== */
+        ul.bullets {
+            list-style: none;
+            padding-left: 4px;
+            margin-top: 3px;
+        }
+
+        ul.bullets li {
+            position: relative;
+            padding-left: 14px;
+            margin-bottom: 2px;
+            color: #333;
+            line-height: 1.5;
+            text-align: justify;
+        }
+
+        ul.bullets li::before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: #2c5aa0;
+            font-weight: 700;
+        }
+
+        /* ===== 自我评价 ===== */
+        .summary-box {
+            background: #f5f8fc;
+            padding: 10px 14px;
+            border-left: 3px solid #2c5aa0;
+            color: #333;
+            line-height: 1.7;
+            text-align: justify;
+        }
+
+        /* ===== 技能 ===== */
+        .skill-category {
+            display: flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+            margin-bottom: 4px;
+            width: 100%;
+        }
+
+        .skill-cat-name {
+            white-space: nowrap;
+            flex-shrink: 0;
+            font-weight: 700;
+            color: #2c5aa0;
+            font-size: 10pt;
+            margin-right: 4px;
+        }
+
+        .skill-cat-items {
+            flex: 1;
+            min-width: 0;
+            color: #333;
+        }
+
+        .skill-tag {
+            display: inline-block;
+            background: #e8f0fe;
+            color: #2c5aa0;
+            padding: 1px 8px;
+            border-radius: 3px;
+            font-size: 9pt;
+            margin: 1px 4px 2px 0;
+        }
+
+        /* ===== 教育 ===== */
+        .edu-extra {
+            font-size: 9pt;
+            color: #555;
+            margin-top: 2px;
+            line-height: 1.5;
+        }
+
+        .edu-extra strong {
+            color: #2c5aa0;
+        }
+
+        /* ===== 证书 / 奖项 / 兴趣的简单列表 ===== */
+        ul.inline-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        ul.inline-list li {
+            display: inline-block;
+            margin-right: 12px;
+            margin-bottom: 3px;
+            color: #333;
+        }
+
+        ul.inline-list li::before {
+            content: "•";
+            color: #2c5aa0;
+            margin-right: 5px;
+            font-weight: 700;
+        }
+
+        /* ===== 语言能力 ===== */
+        .lang-line {
+            color: #333;
+        }
+
+        .lang-line strong {
+            color: #2c5aa0;
+            margin-right: 4px;
+        }
+
+        .lang-line span+span::before {
+            content: " | ";
+            color: #bbb;
+            margin: 0 4px;
+        }
+
+        /* ===== 工作经历内的项目（嵌套渲染） ===== */
+        .work-summary {
+            color: #444;
+            font-size: 9.8pt;
+            margin: 1px 0 3px 0;
+            line-height: 1.45;
+        }
+
+        .nested-projects {
+            margin-top: 4px;
+            margin-left: 10px;
+            padding-left: 10px;
+            border-left: 2px solid #d9e3f3;
+        }
+
+        .nested-projects-title {
+            font-size: 9.5pt;
+            font-weight: 700;
+            color: #2c5aa0;
+            margin-bottom: 3px;
+            letter-spacing: 0.5px;
+        }
+
+        .nested-project {
+            margin-bottom: 5px;
+            page-break-inside: avoid;
+        }
+
+        .nested-project:last-child {
+            margin-bottom: 0;
+        }
+
+        .nested-project .entry-header {
+            margin-bottom: 1px;
+        }
+
+        .nested-project .entry-title {
+            font-size: 10pt;
+        }
+    </style>
+</head>
+
+<body>
+
+    {# ====================== 宏：把 \n 分隔的 bullet 文本渲染为 <ul> ====================== #}
+        {% macro render_bullets(text) -%}
+        {%- set lines = [] -%}
+        {%- for raw in (text or '').split('\n') -%}
+        {%- set line = raw.strip().lstrip('•·▪◦●○-*').strip() -%}
+        {%- if line -%}{%- set _ = lines.append(line) -%}{%- endif -%}
+        {%- endfor -%}
+        {%- if lines -%}
+        <ul class="bullets">
+            {%- for line in lines %}<li>{{ line }}</li>{%- endfor %}
+        </ul>
+        {%- endif -%}
+        {%- endmacro %}
+
+        {# ====================== 个人信息 section（姓名也作为字段渲染） ====================== #}
+        {% set bi = resume.basic_info or {} %}
+
+        <h2 class="section-title">个人信息</h2>
+        <div class="info-grid">
+            {%- set info_items = [] -%}
+            {%- if bi.name -%} {%- set _ = info_items.append(('姓名', bi.name)) -%}{%- endif -%}
+            {%- if bi.job_intention -%}{%- set _ = info_items.append(('求职意向', bi.job_intention)) -%}{%- endif -%}
+            {%- if bi.phone -%} {%- set _ = info_items.append(('电话', bi.phone)) -%}{%- endif -%}
+            {%- if bi.email -%} {%- set _ = info_items.append(('邮箱', bi.email)) -%}{%- endif -%}
+            {%- if bi.location -%} {%- set _ = info_items.append(('所在地', bi.location)) -%}{%- endif -%}
+            {%- set _gender_age = [] -%}
+            {%- if bi.gender -%}{%- set _ = _gender_age.append(bi.gender) -%}{%- endif -%}
+            {%- if bi.age -%}{%- set _ = _gender_age.append(bi.age) -%}{%- endif -%}
+            {%- if _gender_age -%}{%- set _ = info_items.append(('个人', _gender_age | join(' · '))) -%}{%- endif -%}
+            {%- if bi.expected_salary -%}{%- set _ = info_items.append(('期望薪资', bi.expected_salary)) -%}{%- endif -%}
+            {%- if bi.availability -%} {%- set _ = info_items.append(('到岗时间', bi.availability)) -%}{%- endif -%}
+            {%- if bi.github -%} {%- set _ = info_items.append(('GitHub', bi.github)) -%}{%- endif -%}
+            {%- if bi.linkedin -%} {%- set _ = info_items.append(('LinkedIn', bi.linkedin)) -%}{%- endif -%}
+            {%- if bi.personal_site -%} {%- set _ = info_items.append(('个人主页', bi.personal_site)) -%}{%- endif -%}
+            {%- if bi.portfolio -%} {%- set _ = info_items.append(('作品集', bi.portfolio)) -%}{%- endif -%}
+
+            {% for i in range(0, info_items | length, 2) %}
+            <div class="info-row">
+                <div class="info-cell">
+                    <span class="info-label">{{ info_items[i][0] }}</span>{{ info_items[i][1] }}
+                </div>
+                <div class="info-cell">
+                    {% if i + 1 < info_items | length %} <span class="info-label">{{ info_items[i+1][0] }}</span>{{
+                        info_items[i+1][1] }}
+                        {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {# ====================== 专业技能 ====================== #}
+        {% if resume.skill_categories %}
+        <h2 class="section-title">专业技能</h2>
+        {% for cat in resume.skill_categories %}
+        <div class="skill-category">
+            <div class="skill-cat-name">{{ cat['category'] }}：</div>
+            <div class="skill-cat-items">
+                {% for item in cat['items'] %}<span class="skill-tag">{{ item }}</span>{% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+        {% elif resume.skills %}
+        <h2 class="section-title">专业技能</h2>
+        <div>
+            {% for skill in resume.skills %}<span class="skill-tag">{{ skill }}</span>{% endfor %}
+        </div>
+        {% endif %}
+
+        {# ====================== 教育背景 ====================== #}
+        {% if resume.education %}
+        <h2 class="section-title">教育背景</h2>
+        {% for edu in resume.education %}
+        <div class="entry">
+            <div class="entry-header">
+                <div class="eh-left">
+                    <span class="entry-title">{{ edu.school or "" }}</span>
+                    <span class="entry-sub">{{ edu.degree or "" }}{% if edu.major %} · {{ edu.major }}{% endif %}{% if
+                        edu.gpa %} · GPA {{ edu.gpa }}{% endif %}</span>
+                </div>
+                <div class="eh-right entry-period">{{ edu.period or "" }}</div>
+            </div>
+            {% if edu.courses %}
+            <div class="edu-extra"><strong>主修课程：</strong>{{ edu.courses | join("、") }}</div>
+            {% endif %}
+            {% if edu.honors %}
+            <div class="edu-extra"><strong>荣誉奖项：</strong>{{ edu.honors | join("、") }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {# ====================== 宏：渲染单个项目（用于工作/实习经历内嵌或顶层兜底） ====================== #}
+        {% macro render_project(proj, nested=False) -%}
+        <div class="{% if nested %}nested-project{% else %}entry{% endif %}">
+            <div class="entry-header">
+                <div class="eh-left">
+                    <span class="entry-title">{{ proj.name or "" }}</span>
+                    {% if proj.role %}<span class="entry-sub">{{ proj.role }}</span>{% endif %}
+                </div>
+                <div class="eh-right entry-period">{{ proj.period or "" }}</div>
+            </div>
+            {% if proj.intro %}
+            <div class="entry-meta"><strong style="color:#2c5aa0;">项目描述：</strong>{{ proj.intro }}</div>
+            {% endif %}
+            {% if proj.description %}
+            <div class="contrib-label"><strong style="color:#2c5aa0;">主要贡献：</strong></div>
+            {{ render_bullets(proj.description) }}
+            {% endif %}
+            {% if proj.achievements %}
+            <div class="entry-meta" style="margin-top:3px;"><strong style="color:#2c5aa0;">成果展示：</strong>{{
+                proj.achievements }}</div>
+            {% endif %}
+        </div>
+        {%- endmacro %}
+
+        {# ====================== 实习经历 ====================== #}
+        {% if resume.internship %}
+        <h2 class="section-title">实习经历</h2>
+        {% for exp in resume.internship %}
+        <div class="entry">
+            <div class="entry-header">
+                <div class="eh-left">
+                    <span class="entry-title">{{ exp.company or "" }}</span>
+                    <span class="entry-sub">{{ exp.position or "" }}</span>
+                </div>
+                <div class="eh-right entry-period">{{ exp.period or "" }}</div>
+            </div>
+            {% set _intro = ([exp.summary, exp.description] | select | join(' ')) %}
+            {% if _intro %}
+            <div class="nested-projects" style="margin-top:3px;">
+                <div class="nested-projects-title">主要工作</div>
+                <div class="work-summary" style="margin:0;">{{ _intro }}</div>
+            </div>
+            {% endif %}
+            {% if exp.projects %}
+            <div class="nested-projects">
+                <div class="nested-projects-title">相关项目</div>
+                {% for proj in exp.projects %}{{ render_project(proj, nested=True) }}{% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {# ====================== 工作经历（项目已并入每段工作经历内部） ====================== #}
+        {% if resume.work_experience %}
+        <h2 class="section-title">工作经历</h2>
+        {% for exp in resume.work_experience %}
+        <div class="entry">
+            <div class="entry-header">
+                <div class="eh-left">
+                    <span class="entry-title">{{ exp.company or "" }}</span>
+                    <span class="entry-sub">{{ exp.position or "" }}</span>
+                </div>
+                <div class="eh-right entry-period">{{ exp.period or "" }}</div>
+            </div>
+            {% set _intro = ([exp.summary, exp.description] | select | join(' ')) %}
+            {% if _intro %}
+            <div class="nested-projects" style="margin-top:3px;">
+                <div class="nested-projects-title">主要工作</div>
+                <div class="work-summary" style="margin:0;">{{ _intro }}</div>
+            </div>
+            {% endif %}
+            {% if exp.projects %}
+            <div class="nested-projects">
+                <div class="nested-projects-title">相关项目</div>
+                {% for proj in exp.projects %}{{ render_project(proj, nested=True) }}{% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {# ====================== 项目经验（兜底：仅在没有工作/实习经历时单独展示） ====================== #}
+        {% if resume.projects and not resume.work_experience and not resume.internship %}
+        <h2 class="section-title">项目经验</h2>
+        {% for proj in resume.projects %}{{ render_project(proj, nested=False) }}{% endfor %}
+        {% endif %}
+
+        {# ====================== 证书 ====================== #}
+        {% if resume.certifications %}
+        <h2 class="section-title">证书资质</h2>
+        <ul class="inline-list">
+            {% for cert in resume.certifications %}<li>{{ cert }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+
+        {# ====================== 获奖 ====================== #}
+        {% if resume.awards %}
+        <h2 class="section-title">获奖荣誉</h2>
+        <ul class="inline-list">
+            {% for award in resume.awards %}<li>{{ award }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+
+        {# ====================== 语言能力 ====================== #}
+        {% if resume.language_ability and (resume.language_ability.mandarin or resume.language_ability.english or
+        resume.language_ability.other) %}
+        <h2 class="section-title">语言能力</h2>
+        <div class="lang-line">
+            {% if resume.language_ability.mandarin %}<span><strong>普通话：</strong>{{ resume.language_ability.mandarin
+                }}</span>{% endif %}
+            {% if resume.language_ability.english %}<span><strong>英语：</strong>{{ resume.language_ability.english
+                }}</span>{% endif %}
+            {% if resume.language_ability.other %}<span><strong>其他：</strong>{{ resume.language_ability.other }}</span>{%
+            endif %}
+        </div>
+        {% endif %}
+
+        {# ====================== 自我评价（按顺序固定放最后） ====================== #}
+        {% if resume.self_evaluation %}
+        <h2 class="section-title">自我评价</h2>
+        <div class="summary-box">{{ resume.self_evaluation }}</div>
+        {% endif %}
+
+        {# 额外板块（hobbies / target_city / self_directed_learning 等）按需求不再渲染 #}
+
+</body>
+
+</html>

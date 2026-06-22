@@ -5,17 +5,17 @@ from datetime import datetime
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
 
-from src.config import Config
-from src.logger import logger
+from src.common.config import Config
+from src.common.logger import logger
 from src.tools.pdf_parser import extract_text_from_pdf
 from src.tools.json_fixer import (
     robust_parse_json,
     normalize_resume_schema,
     merge_projects_into_work_experience,
 )
-from src.prompts.parse import PARSE_PROMPT
-from src.prompts.analyze import ANALYZE_PROMPT
-from src.prompts.optimize import OPTIMIZE_PROMPT
+from src.core.prompts.parse import PARSE_PROMPT
+from src.core.prompts.analyze import ANALYZE_PROMPT
+from src.core.prompts.optimize import OPTIMIZE_PROMPT
 from src.tools.pdf_generator import generate_resume_pdf, generate_analysis_report_pdf
 
 
@@ -23,13 +23,25 @@ class ResumeOptimizerAgent:
     def __init__(self, config: Config = None):
         self.config = config or Config()
 
-        # 深度思考开关
+        # 深度思考开关 + 思考强度
         extra_body: dict = {
             "thinking": {
                 "type": "enabled" if self.config.ENABLE_THINKING else "disabled"
             }
         }
-        logger.info("extra_body: {}", extra_body)
+        # 思考强度仅在思考模式开启时下发；关闭时携带 reasoning_effort 无意义
+        if self.config.ENABLE_THINKING and self.config.REASONING_EFFORT:
+            extra_body["reasoning_effort"] = self.config.REASONING_EFFORT
+
+        logger.info(
+            "Config — model: {}, base_url: {}, temperature: {}, max_tokens: {}, log_level: {}, extra_body: {}",
+            self.config.MODEL_NAME,
+            self.config.DEEPSEEK_BASE_URL,
+            self.config.TEMPERATURE,
+            self.config.MAX_TOKENS,
+            self.config.LOG_LEVEL,
+            extra_body
+        )
 
         self.llm = ChatOpenAI(
             model=self.config.MODEL_NAME,

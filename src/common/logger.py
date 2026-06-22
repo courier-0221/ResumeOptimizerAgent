@@ -2,7 +2,7 @@
 统一日志配置模块 — 基于 loguru。
 
 用法:
-    from src.logger import logger
+    from src.common.logger import logger
 
     logger.info("正在处理...")
     logger.debug("详细数据: {}", data)

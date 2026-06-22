@@ -1,84 +1,98 @@
+"""统一服务入口。
+用法:
+    python -m src.main api       # 启动 API 服务 (uvicorn)
+    python -m src.main worker    # 启动任务 worker (RQ)
+    python -m src.main all       # 同时启动 worker(子进程) + api(前台)
+"""
+
 import argparse
+import multiprocessing
 import sys
-import os
 
-# 确保项目根目录在 path 中
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from src.agent import ResumeOptimizerAgent
-from src.config import Config
-from src.logger import logger, setup_logger
+from src.common.config import Config
+from src.common.logger import logger, setup_logger
 
 
-def main():
+def run_api(config: Config) -> None:
+    import uvicorn
+
+    uvicorn.run(
+        "src.api.app:app",
+        host=config.API_HOST,
+        port=config.API_PORT,
+        reload=config.API_RELOAD,
+        log_level=config.LOG_LEVEL.lower(),
+    )
+
+
+def run_worker(config: Config) -> None:
+    # 复用现有 worker 入口，保持队列/连接逻辑单点
+    from src.api.worker.run_worker import main as worker_main
+
+    worker_main()
+
+
+def run_all(config: Config) -> None:
+    """同时启动 worker(子进程) + api(前台)。退出时一并回收 worker。"""
+    if config.QUEUE_BACKEND == "fake":
+        logger.info("QUEUE_BACKEND=fake，任务在 API 进程内同步执行，仅启动 API")
+        run_api(config)
+        return
+
+    # 预检 redis 连通性：连不上则不盲目拉起 worker（否则它会静默崩溃）
+    from src.api.worker.task_queue import get_redis
+
+    try:
+        get_redis().ping()
+    except Exception as exc:
+        logger.error(
+            "无法连接 Redis（{}）：{}。请先启动 Redis（如 ./manage.sh start redis）后重试。",
+            config.REDIS_URL,
+            exc,
+        )
+        return
+
+    if config.API_RELOAD:
+        logger.warning("all 模式不支持 API_RELOAD 热重载，已忽略该选项")
+
+    worker_proc = multiprocessing.Process(
+        target=run_worker, args=(config,), name="rq-worker", daemon=True
+    )
+    worker_proc.start()
+    logger.info("worker 子进程已启动 (pid {})", worker_proc.pid)
+
+    try:
+        run_api(config)
+    finally:
+        if worker_proc.is_alive():
+            logger.info("正在停止 worker 子进程 (pid {}) ...", worker_proc.pid)
+            worker_proc.terminate()
+            worker_proc.join(timeout=10)
+            if worker_proc.is_alive():
+                worker_proc.kill()
+
+
+def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
-        description="",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-使用示例:
-  python src/main.py -r test/pdf/test_1.pdf -t "Python后端开发工程师"
-  python src/main.py -r test/pdf/test_1.pdf -t "算法工程师" -d "要求3年以上机器学习经验，熟悉PyTorch..."
-  python src/main.py -r test/pdf/test_1.pdf -t "前端开发" -o output/frontend_resume.pdf
-        """,
+        prog="resume-optimizer", description="ResumeOptimizerAgent 服务入口"
     )
-    parser.add_argument(
-        "--resume", "-r", required=True, help="简历PDF文件路径"
-    )
-    parser.add_argument(
-        "--job-title", "-t", required=True, help="目标岗位名称"
-    )
-    parser.add_argument(
-        "--job-desc", "-d", default="", help="岗位描述/要求文本（选填）"
-    )
-    parser.add_argument(
-        "--output", "-o", default="", help="输出简历PDF路径（默认output/optimized_resume.pdf；分析报告与其同目录）"
-    )
+    sub = parser.add_subparsers(dest="service", required=True)
+    sub.add_parser("api", help="启动 API 服务 (uvicorn)")
+    sub.add_parser("worker", help="启动任务 worker (RQ)")
+    sub.add_parser("all", help="同时启动 worker(子进程) + api(前台)")
+    args = parser.parse_args(argv)
 
-    args = parser.parse_args()
-
-    # 先加载配置，再初始化日志（确保日志格式生效）
     config = Config()
     setup_logger(level=config.LOG_LEVEL, log_file=config.LOG_FILE)
 
-    # 校验输入文件
-    if not os.path.exists(args.resume):
-        logger.error("简历文件不存在: {}", args.resume)
-        sys.exit(1)
-
-    if not config.DEEPSEEK_API_KEY or config.DEEPSEEK_API_KEY == "your_api_key_here":
-        logger.error("请在 .env 文件中填入 DEEPSEEK_API_KEY")
-        sys.exit(1)
-
-    # 如果指定了输出路径则覆盖配置
-    if args.output:
-        config.OUTPUT_DIR = os.path.dirname(args.output) or "output"
-
-    agent = ResumeOptimizerAgent(config)
-
-    try:
-        result = agent.run(
-            pdf_path=args.resume,
-            job_title=args.job_title,
-            job_description=args.job_desc,
-        )
-        resume_path = result.get("resume_pdf", "")
-        report_path = result.get("report_pdf", "")
-
-        if args.output:
-            # 如果用户指定了不同的输出路径，移动简历文件
-            import shutil
-            if resume_path and resume_path != args.output:
-                os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
-                shutil.move(resume_path, args.output)
-                resume_path = args.output
-
-        logger.success("简历输出: {}", resume_path)
-        if report_path:
-            logger.success("分析报告: {}", report_path)
-    except Exception as e:
-        logger.exception("执行失败: {}", e)
-        sys.exit(1)
+    if args.service == "api":
+        run_api(config)
+    elif args.service == "worker":
+        run_worker(config)
+    elif args.service == "all":
+        run_all(config)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

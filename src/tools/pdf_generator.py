@@ -5,6 +5,30 @@ import sys
 from jinja2 import Template
 
 
+def _weasyprint_env() -> dict:
+    """构造 WeasyPrint 子进程环境。
+
+    - G_SLICE/G_DEBUG：规避 macOS 上 GLib slice 分配器与已加载网络/加密栈互扰。
+    - macOS 额外注入 DYLD_FALLBACK_LIBRARY_PATH：WeasyPrint 依赖的
+      libgobject/pango/cairo 等原生库由 Homebrew 安装在 /opt/homebrew/lib
+      （Apple Silicon）或 /usr/local/lib（Intel），但不在 conda Python 子进程的
+      默认动态库搜索路径中，否则 cffi dlopen 报
+      "cannot load library 'libgobject-2.0-0'"。
+    """
+    env = os.environ.copy()
+    env["G_SLICE"] = "always-malloc"
+    env["G_DEBUG"] = "gc-friendly"
+
+    if sys.platform == "darwin":
+        brew_libs = [p for p in ("/opt/homebrew/lib", "/usr/local/lib") if os.path.isdir(p)]
+        if brew_libs:
+            existing = env.get("DYLD_FALLBACK_LIBRARY_PATH", "")
+            parts = brew_libs + ([existing] if existing else [])
+            env["DYLD_FALLBACK_LIBRARY_PATH"] = ":".join(parts)
+
+    return env
+
+
 # 子进程脚本：在干净的 Python 解释器里调用 WeasyPrint，避免主进程因
 # httpx / OpenSSL / CoreFoundation 等先行初始化污染 GLib slice 分配器，
 # 进而触发 macOS 上 "GSlice: assertion failed" 崩溃。
@@ -48,9 +72,7 @@ def render_template_to_pdf(
         f.write(html_content)
 
     # 在子进程中调用 WeasyPrint
-    env = os.environ.copy()
-    env["G_SLICE"] = "always-malloc"
-    env["G_DEBUG"] = "gc-friendly"
+    env = _weasyprint_env()
 
     proc = subprocess.run(
         [sys.executable, "-c", _RENDER_SUBPROCESS, debug_html_path, output_path],
